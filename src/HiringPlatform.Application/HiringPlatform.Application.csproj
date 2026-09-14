@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Use cases + ports. Depends only on Domain (same direction as cv-sv core/handlers → core/repos). -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\HiringPlatform.Domain\HiringPlatform.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>

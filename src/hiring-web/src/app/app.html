@@ -1,0 +1,3 @@
+<app-header />
+@if (auth.ready()) { <router-outlet /> }
+@else { <div class="boot"><span></span><p>Preparing your workspace…</p></div> }

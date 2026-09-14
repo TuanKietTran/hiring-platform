@@ -1,0 +1,38 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+
+# Keep type declarations readable and analyzable. The vertical primary-
+# constructor/record layout is enforced by scripts/format-csharp-types.py.
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_between_query_expression_clauses = true
+csharp_preserve_single_line_statements = false
+csharp_preserve_single_line_blocks = false
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_style_prefer_primary_constructors = true:suggestion
+
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
+dotnet_diagnostic.IDE0005.severity = warning
+# Result<T>.Ok/Fail factories are intentional and idiomatic in this CQRS boundary.
+dotnet_diagnostic.CA1000.severity = none
+
+[*.{ts,html,scss,json}]
+indent_style = space
+indent_size = 2

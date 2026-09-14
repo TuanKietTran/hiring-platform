@@ -1,0 +1,152 @@
+# Restart-safe dev environment for OrbStack Kubernetes.
+# Deployment (not a bare Pod) so the pod is recreated after a Mac/OrbStack restart;
+# PVCs (local-path provisioner) so PostgreSQL, node_modules and NuGet survive recreation.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hiring-dev
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: web-node-modules
+  namespace: hiring-dev
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests: { storage: 5Gi }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nuget
+  namespace: hiring-dev
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests: { storage: 5Gi }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  namespace: hiring-dev
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: local-path
+  resources:
+    requests: { storage: 10Gi }
+---
+# Development-only credentials, scoped to the local OrbStack cluster.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres
+  namespace: hiring-dev
+type: Opaque
+stringData:
+  POSTGRES_USER: hiring
+  POSTGRES_PASSWORD: hiring-dev-only
+  POSTGRES_DB: hiringdb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: hiring-dev
+spec:
+  selector: { app: postgres }
+  ports:
+    - { name: postgres, port: 5432, targetPort: 5432 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: hiring-dev
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: postgres }
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          envFrom:
+            - secretRef: { name: postgres }
+          ports:
+            - { containerPort: 5432 }
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", "hiring", "-d", "hiringdb"] }
+            initialDelaySeconds: 3
+            periodSeconds: 3
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/postgresql/data }
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 1Gi }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: postgres-data }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devbox
+  namespace: hiring-dev
+  labels:
+    app: devbox
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # RWO volumes: never run two pods at once
+  selector:
+    matchLabels:
+      app: devbox
+  template:
+    metadata:
+      labels:
+        app: devbox
+    spec:
+      containers:
+        - name: dev
+          image: hiring-devbox:local
+          imagePullPolicy: Never # built locally with OrbStack docker, shared with the k8s node
+          workingDir: /workspace
+          env:
+            - name: ConnectionStrings__hiringdb
+              value: Host=postgres.hiring-dev.svc.cluster.local;Port=5432;Database=hiringdb;Username=hiring;Password=hiring-dev-only
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            # Linux node_modules kept separate from the macOS ones on the host
+            - name: web-node-modules
+              mountPath: /workspace/src/hiring-web/node_modules
+            - name: nuget
+              mountPath: /root/.nuget/packages
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+          resources:
+            requests: { cpu: "1", memory: 2Gi }
+            limits: { memory: 6Gi }
+      volumes:
+        - name: workspace
+          hostPath:
+            path: /Users/handlerone/Downloads/hiring-platform
+            type: Directory
+        - name: web-node-modules
+          persistentVolumeClaim:
+            claimName: web-node-modules
+        - name: nuget
+          persistentVolumeClaim:
+            claimName: nuget
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket

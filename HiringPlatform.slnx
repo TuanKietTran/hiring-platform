@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HiringPlatform.Api/HiringPlatform.Api.csproj" />
+    <Project Path="src/HiringPlatform.AppHost/HiringPlatform.AppHost.csproj" />
+    <Project Path="src/HiringPlatform.Application/HiringPlatform.Application.csproj" />
+    <Project Path="src/HiringPlatform.Domain/HiringPlatform.Domain.csproj" />
+    <Project Path="src/HiringPlatform.Infrastructure/HiringPlatform.Infrastructure.csproj" />
+    <Project Path="src/HiringPlatform.ServiceDefaults/HiringPlatform.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/HiringPlatform.Domain.Tests/HiringPlatform.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

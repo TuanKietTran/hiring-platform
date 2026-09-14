@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Pure domain: no framework or infrastructure dependencies (same rule as cv-sv core/). -->
+
+</Project>
