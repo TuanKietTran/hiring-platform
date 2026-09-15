@@ -9,17 +9,23 @@ namespace HiringPlatform.Api;
 
 internal static class JobEndpoints
 {
-    public static RouteGroupBuilder MapJobEndpoints(this RouteGroupBuilder api)
+    public static RouteGroupBuilder MapJobEndpoints(this RouteGroupBuilder api) =>
+        api.MapPublicJobEndpoints().MapRecruiterJobEndpoints();
+
+    public static RouteGroupBuilder MapPublicJobEndpoints(this RouteGroupBuilder api)
     {
         api.MapGet("/jobs", SearchJobs);
         api.MapGet("/jobs/{id:guid}", GetJob);
+        return api;
+    }
 
+    public static RouteGroupBuilder MapRecruiterJobEndpoints(this RouteGroupBuilder api)
+    {
         var secured = api.MapGroup("").RequireAuthorization();
         secured.MapGet("/company/jobs", ListCompanyJobs);
         secured.MapPost("/jobs", CreateJob);
         secured.MapPut("/jobs/{id:guid}", UpdateJob);
         secured.MapPost("/jobs/{id:guid}/status", ChangeJobStatus);
-
         return api;
     }
 

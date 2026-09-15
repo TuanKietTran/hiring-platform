@@ -1,3 +1,4 @@
+using HiringPlatform.Domain.Applicants;
 using HiringPlatform.Domain.Applications;
 using HiringPlatform.Domain.Common;
 using HiringPlatform.Domain.Companies;
@@ -55,6 +56,13 @@ public interface IJobRepository
     Task<(IReadOnlyList<Job> Items, int Total)> SearchOpen(JobSearch search, CancellationToken ct);
     void Add(Job job);
     void Update(Job job);
+}
+
+public interface IApplicantProfileRepository
+{
+    Task<CandidateProfile?> Find(UserId candidateId, CancellationToken ct);
+    void Add(CandidateProfile profile);
+    void Update(CandidateProfile profile);
 }
 
 public interface IApplicationRepository

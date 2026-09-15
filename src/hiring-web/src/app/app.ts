@@ -11,5 +11,7 @@ import { Header } from './shared/header';
 })
 export class App {
   protected readonly auth = inject(AuthService);
-  constructor() { void this.auth.restore(); }
+  constructor() {
+    void this.auth.restore();
+  }
 }

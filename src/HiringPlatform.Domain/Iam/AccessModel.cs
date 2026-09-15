@@ -34,6 +34,16 @@ public sealed record AccessAction
     public static readonly AccessAction CandidateRead = new("candidate:read");
     public static readonly AccessAction CandidateWrite = new("candidate:write");
 
+    private static readonly Dictionary<string, AccessAction> ByCode = new[]
+    {
+        CompanyRead, CompanyWrite, JobRead, JobWrite, JobPublish, ApplicationRead, ApplicationCreate,
+        ApplicationAdvance, ApplicationWithdraw, InterviewSchedule, CandidateRead, CandidateWrite,
+    }.ToDictionary(x => x.Code, StringComparer.OrdinalIgnoreCase);
+
+    public static AccessAction FromCode(string code) => ByCode.TryGetValue(code?.Trim() ?? "", out var action)
+        ? action
+        : throw new DomainException("Unknown access action");
+
     public override string ToString() => Code;
 }
 

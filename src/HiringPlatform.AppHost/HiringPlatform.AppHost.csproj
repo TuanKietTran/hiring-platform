@@ -1,7 +1,11 @@
 <Project Sdk="Aspire.AppHost.Sdk/13.5.3">
   <PropertyGroup><OutputType>Exe</OutputType><NoWarn>$(NoWarn);ASPIRE010</NoWarn></PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HiringPlatform.Api\HiringPlatform.Api.csproj" />
+    <ProjectReference Include="..\HiringPlatform.IdentityService\HiringPlatform.IdentityService.csproj" />
+    <ProjectReference Include="..\HiringPlatform.ApplicantService\HiringPlatform.ApplicantService.csproj" />
+    <ProjectReference Include="..\HiringPlatform.BlobService\HiringPlatform.BlobService.csproj" />
+    <ProjectReference Include="..\HiringPlatform.RecruiterService\HiringPlatform.RecruiterService.csproj" />
+    <ProjectReference Include="..\HiringPlatform.Gateway\HiringPlatform.Gateway.csproj" />
     <ProjectReference Include="..\HiringPlatform.Migrator\HiringPlatform.Migrator.csproj" />
   </ItemGroup>
   <ItemGroup>

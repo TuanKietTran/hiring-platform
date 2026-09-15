@@ -1,6 +1,7 @@
 using System.Text.Json;
 
 using HiringPlatform.Application.Common;
+using HiringPlatform.Domain.Applicants;
 using HiringPlatform.Domain.Applications;
 using HiringPlatform.Domain.Common;
 using HiringPlatform.Domain.Companies;
@@ -88,6 +89,24 @@ public sealed class JobRepository(
     public void Update(Job job) => db.Jobs.Update(Row(job));
     private static Job? Map(JobRow? row) => row is null ? null : Job.FromSnapshot(Json.Read<JobSnapshot>(row.Snapshot));
     private static JobRow Row(Job j) => new() { Id = j.Id.Value, CompanyId = j.CompanyId.Value, Status = (int)j.Status, SearchText = $"{j.Title} {j.Description} {j.Location} {string.Join(' ', j.Skills)}", Snapshot = Json.Write(j.ToSnapshot()) };
+}
+
+public sealed class ApplicantProfileRepository(
+    HiringDbContext db
+) : IApplicantProfileRepository
+{
+    public async Task<CandidateProfile?> Find(UserId candidateId, CancellationToken ct)
+    {
+        var row = await db.ApplicantProfiles.AsNoTracking().SingleOrDefaultAsync(x => x.CandidateId == candidateId.Value, ct);
+        return row is null ? null : CandidateProfile.FromSnapshot(Json.Read<CandidateProfileSnapshot>(row.Snapshot));
+    }
+    public void Add(CandidateProfile profile) => db.ApplicantProfiles.Add(Row(profile));
+    public void Update(CandidateProfile profile) => db.ApplicantProfiles.Update(Row(profile));
+    private static ApplicantProfileRow Row(CandidateProfile profile) => new()
+    {
+        CandidateId = profile.CandidateId.Value,
+        Snapshot = Json.Write(profile.ToSnapshot()),
+    };
 }
 
 public sealed class ApplicationRepository(

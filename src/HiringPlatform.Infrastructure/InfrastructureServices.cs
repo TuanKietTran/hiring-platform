@@ -22,6 +22,7 @@ public static class InfrastructureServices
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICompanyRepository, CompanyRepository>();
         services.AddScoped<IJobRepository, JobRepository>();
+        services.AddScoped<IApplicantProfileRepository, ApplicantProfileRepository>();
         services.AddScoped<IApplicationRepository, ApplicationRepository>();
         services.AddScoped<IInterviewRepository, InterviewRepository>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
@@ -33,7 +34,16 @@ public static class InfrastructureServices
     public static async Task EnsureDatabaseAsync(this IServiceProvider services)
     {
         await using var scope = services.CreateAsyncScope();
-        await scope.ServiceProvider.GetRequiredService<HiringDbContext>().Database.EnsureCreatedAsync();
+        var database = scope.ServiceProvider.GetRequiredService<HiringDbContext>().Database;
+        await database.EnsureCreatedAsync();
+        // EnsureCreated does not evolve an already-created prototype database. Keep the new
+        // applicant slice restart-safe until this prototype moves to versioned migrations.
+        await database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS applicant_profiles (
+                "CandidateId" uuid PRIMARY KEY,
+                "Snapshot" jsonb NOT NULL
+            );
+            """);
     }
 }
 

@@ -1,3 +1,4 @@
+using HiringPlatform.Domain.Applicants;
 using HiringPlatform.Domain.Applications;
 using HiringPlatform.Domain.Common;
 using HiringPlatform.Domain.Iam;
@@ -38,6 +39,28 @@ public sealed class DomainTests
     {
         Assert.Equal(ApplicationStage.Screening, ApplicationStage.Applied.TransitionTo(ApplicationStage.Screening));
         Assert.Throws<InvalidTransitionException>(() => ApplicationStage.Applied.TransitionTo(ApplicationStage.Offered));
+    }
+
+    [Fact]
+    public void ApplicantProfileMaintainsOnePrimaryCv()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var firstId = Guid.CreateVersion7();
+        var secondId = Guid.CreateVersion7();
+        var profile = CandidateProfile.Create(UserId.New(), now)
+            .AddCv(firstId, "General CV", "https://example.com/general.pdf", now)
+            .AddCv(secondId, "Engineering CV", "https://example.com/engineering.pdf", now)
+            .SetPrimaryCv(secondId, now);
+
+        Assert.False(profile.Cvs.Single(x => x.Id == firstId).IsPrimary);
+        Assert.True(profile.Cvs.Single(x => x.Id == secondId).IsPrimary);
+    }
+
+    [Fact]
+    public void ApplicantProfileRejectsInsecureCvLinks()
+    {
+        var profile = CandidateProfile.Create(UserId.New(), DateTimeOffset.UtcNow);
+        Assert.Throws<DomainException>(() => profile.AddCv(Guid.NewGuid(), "CV", "http://example.com/cv.pdf", DateTimeOffset.UtcNow));
     }
 
     [Fact]

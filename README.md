@@ -4,7 +4,7 @@ A domain-driven hiring platform built with **.NET 10 / Aspire 13** and **Angular
 
 ## Product flows
 
-- Candidates register, discover open jobs, apply once, track progress, and withdraw.
+- Candidates register, maintain a professional profile and versioned HTTPS CV library, discover open jobs, apply once, track progress, and withdraw.
 - Companies register an initial org admin, add hiring staff, draft/publish/pause/close jobs, and manage candidate pipelines.
 - Application transitions are enforced: `applied → screening → interviewing → offered → hired`, with terminal reject/withdraw paths.
 - Interview scheduling validates company membership, stage, duration, and panel conflicts.
@@ -14,19 +14,27 @@ A domain-driven hiring platform built with **.NET 10 / Aspire 13** and **Angular
 
 ```text
 Angular TypeScript SPA
-        ↓ HTTP
-HiringPlatform.Api             endpoints, cookie auth
-        ↓ Mediator
-HiringPlatform.Application     CQRS handlers + repository ports
-        ↓
-HiringPlatform.Domain          pure aggregates, value objects, ABAC
-        ↑
-HiringPlatform.Infrastructure  EF Core/PostgreSQL adapters
+        ↓ same-origin HTTP
+HiringPlatform.Gateway                 edge routing + load balancing
+        ├── IdentityService × 2        users, staff identity, authentication, ABAC/PDP
+        ├── ApplicantService × 2       job discovery, applications, profile + CV library
+        └── RecruiterService × 2       roles, candidate pipelines, interviews
+                         ↓ Mediator
+HiringPlatform.Application             CQRS handlers + repository ports
+                         ↓
+HiringPlatform.Domain                  pure aggregates, value objects, deny-overrides ABAC
+                         ↑
+HiringPlatform.Infrastructure          EF Core/PostgreSQL adapters
 
-HiringPlatform.AppHost         Aspire orchestration + telemetry/health
+Hirelane.ServiceClients                public typed REST client package for service-to-service calls
+HiringPlatform.AppHost                 Aspire orchestration, discovery, replicas, telemetry/health
 ```
 
-Dependencies point inward. `Domain` has no framework dependency. PostgreSQL rows keep searchable/indexed columns while aggregate snapshots remain domain-owned.
+The gateway is the only browser API and keeps the existing `/api` contract. Aspire service discovery distributes calls over two healthy replicas of each service. Authentication cookies use one application name and a shared protected-key directory, so identity-issued sessions are accepted by the applicant and recruiter services.
+
+Internal callers use the interfaces exported by `src/HiringPlatform.ServiceClients` rather than constructing service URLs. That package owns public route constants and REST contracts (`IIdentityServiceClient`, `IApplicantServiceClient`, and `IRecruiterServiceClient`). The identity service exposes `/api/access/evaluate` as the central policy-decision endpoint.
+
+Dependencies still point inward and `Domain` has no framework dependency. The first service extraction deliberately shares the existing PostgreSQL adapter so behavior remains transactional while boundaries settle; splitting schemas/databases and replacing local identity reads with the exported identity client are the next extraction steps.
 
 ## Run in the restart-safe OrbStack dev pod
 
@@ -78,4 +86,5 @@ Useful commands:
 
 - Schema startup currently uses `EnsureCreated`; introduce versioned EF migrations before production.
 - Cookie authentication is appropriate for this same-origin SPA, but production deployment should add explicit antiforgery enforcement, external secret management, email verification, reset flows, and hardened data-protection key storage.
-- Resume handling currently stores an HTTPS URL, not uploaded files.
+- CV handling currently stores versioned HTTPS URLs, not uploaded binaries.
+- The extracted services currently share one database as a transitional deployment boundary; move to service-owned schemas and asynchronous integration events before independent scaling in production.

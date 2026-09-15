@@ -10,7 +10,12 @@ import { AuthService } from '../core/auth.service';
       <a class="brand" routerLink="/"><span>H</span> Hirelane</a>
       <nav>
         <a routerLink="/jobs" routerLinkActive="active">Find jobs</a>
-        @if (auth.authenticated()) { <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a> }
+        @if (auth.authenticated()) {
+          <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+        }
+        @if (auth.user()?.role === 'candidate') {
+          <a routerLink="/profile" routerLinkActive="active">Profile & CV</a>
+        }
       </nav>
       <div class="account">
         @if (auth.user(); as user) {
@@ -27,5 +32,8 @@ import { AuthService } from '../core/auth.service';
 export class Header {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  protected async logout(): Promise<void> { await this.auth.logout(); await this.router.navigateByUrl('/'); }
+  protected async logout(): Promise<void> {
+    await this.auth.logout();
+    await this.router.navigateByUrl('/');
+  }
 }

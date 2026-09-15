@@ -10,6 +10,7 @@ public sealed class HiringDbContext(
     public DbSet<CompanyRow> Companies => Set<CompanyRow>();
     public DbSet<JobRow> Jobs => Set<JobRow>();
     public DbSet<ApplicationRow> Applications => Set<ApplicationRow>();
+    public DbSet<ApplicantProfileRow> ApplicantProfiles => Set<ApplicantProfileRow>();
     public DbSet<InterviewRow> Interviews => Set<InterviewRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -35,6 +36,12 @@ public sealed class HiringDbContext(
             e.HasKey(x => x.Id);
             e.HasIndex(x => x.CompanyId);
             e.HasIndex(x => x.Status);
+            e.Property(x => x.Snapshot).HasColumnType("jsonb");
+        });
+        modelBuilder.Entity<ApplicantProfileRow>(e =>
+        {
+            e.ToTable("applicant_profiles");
+            e.HasKey(x => x.CandidateId);
             e.Property(x => x.Snapshot).HasColumnType("jsonb");
         });
         modelBuilder.Entity<ApplicationRow>(e =>
@@ -91,6 +98,14 @@ public sealed class JobRow
         get; set;
     }
     public string SearchText { get; set; } = ""; public string Snapshot { get; set; } = "{}";
+}
+public sealed class ApplicantProfileRow
+{
+    public Guid CandidateId
+    {
+        get; set;
+    }
+    public string Snapshot { get; set; } = "{}";
 }
 public sealed class ApplicationRow
 {

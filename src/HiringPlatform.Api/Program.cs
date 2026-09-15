@@ -16,7 +16,7 @@ builder.Services.ConfigureHttpJsonOptions(o =>
     o.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(o =>
 {
-    o.Cookie.Name = "hiring.session";
+    o.Cookie.Name = ApiConstants.CookieName;
     o.Cookie.HttpOnly = true;
     o.Cookie.SameSite = SameSiteMode.Lax;
     o.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
@@ -44,8 +44,10 @@ app.MapDefaultEndpoints();
 
 var api = app.MapGroup("/api");
 api.MapIdentityEndpoints();
+api.MapAccessEndpoints();
 api.MapJobEndpoints();
 api.MapApplicationEndpoints();
+api.MapApplicantProfileEndpoints();
 api.MapInterviewEndpoints();
 
 app.Run();

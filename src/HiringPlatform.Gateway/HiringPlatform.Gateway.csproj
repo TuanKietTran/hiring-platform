@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\HiringPlatform.ServiceDefaults\HiringPlatform.ServiceDefaults.csproj" />
+    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.10.0" />
+  </ItemGroup>
+</Project>
