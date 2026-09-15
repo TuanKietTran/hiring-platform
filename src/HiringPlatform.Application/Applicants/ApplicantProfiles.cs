@@ -2,6 +2,7 @@ using HiringPlatform.Application.Common;
 using HiringPlatform.Domain.Applicants;
 using HiringPlatform.Domain.Common;
 using HiringPlatform.Domain.Identity;
+using HiringPlatform.Domain.Iam;
 
 namespace HiringPlatform.Application.Applicants;
 
@@ -33,6 +34,38 @@ public sealed record ApplicantProfileDto(
 public sealed record GetMyApplicantProfile(
     UserId ActorId
 ) : IQuery<ApplicantProfileDto>;
+
+public sealed record GetApplicantProfileForApplication(
+    UserId ActorId,
+    ApplicationId ApplicationId
+) : IQuery<ApplicantProfileDto>;
+
+public sealed class GetApplicantProfileForApplicationHandler(
+    AccessGuard guard,
+    IApplicationRepository applications,
+    IJobRepository jobs,
+    IApplicantProfileRepository profiles
+) : IHandler<GetApplicantProfileForApplication, ApplicantProfileDto>
+{
+    public async Task<Result<ApplicantProfileDto>> Handle(GetApplicantProfileForApplication request, CancellationToken ct)
+    {
+        var actor = await guard.Actor(request.ActorId, ct);
+        if (!actor.IsSuccess)
+            return actor.Error!;
+        if (await applications.Find(request.ApplicationId, ct) is not { } application)
+            return ApplicationError.NotFound("Application not found");
+        var job = await jobs.Find(application.JobId, ct);
+        if (job is null)
+            return ApplicationError.NotFound("Job not found");
+        var resource = new ResourceAttributes(ResourceType.Job, job.Id.Value, null, job.CompanyId);
+        if (guard.Check(actor.Value!, resource, AccessAction.ApplicationRead) is { } denied)
+            return denied;
+        var profile = await profiles.Find(application.CandidateId, ct);
+        return profile is null
+            ? ApplicationError.NotFound("Applicant profile not found")
+            : ApplicantProfileDto.From(profile);
+    }
+}
 public sealed class GetMyApplicantProfileHandler(
     AccessGuard guard,
     IApplicantProfileRepository profiles,

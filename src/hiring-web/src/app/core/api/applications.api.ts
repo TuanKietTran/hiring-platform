@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import type { ApplicationStage, JobApplication } from '../models';
+import type { ApplicantProfile, ApplicationStage, JobApplication } from '../models';
 
 const ROOT = '/api';
 
@@ -21,6 +21,10 @@ export class ApplicationsApi {
 
   listForJob(jobId: string) {
     return this.http.get<JobApplication[]>(`${ROOT}/jobs/${jobId}/applications`);
+  }
+
+  candidateProfile(applicationId: string) {
+    return this.http.get<ApplicantProfile>(`${ROOT}/applications/${applicationId}/candidate-profile`);
   }
 
   advance(id: string, to: ApplicationStage, note: string | null) {

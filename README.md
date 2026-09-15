@@ -49,7 +49,7 @@ cd /Users/handlerone/Downloads/hiring-platform
 Then open:
 
 - Angular app: http://localhost:4201
-- Aspire dashboard: http://localhost:15888 (the tokenized login URL is in `./dev.sh logs`)
+- Aspire dashboard: use the tokenized `https://localhost:15888/login?t=…` URL printed by `./dev.sh ports`
 
 Development startup idempotently seeds these local-only accounts:
 

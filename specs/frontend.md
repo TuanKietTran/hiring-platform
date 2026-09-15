@@ -12,6 +12,7 @@ This spec covers `src/hiring-web/src/app/`, `proxy.conf.js`, Angular routes/page
 - Candidates can register/login, maintain a professional profile/CV links, apply, track applications, and withdraw.
 - Company staff can register/login, create and control roles, view pipelines, and advance candidates.
 - The browser must restore an existing cookie session before presenting identity-dependent navigation.
+- The browser must visibly distinguish an unreachable server or offline device from an unauthenticated session.
 - Client role checks improve navigation but never replace API authorization.
 
 ## Route Map
@@ -51,6 +52,23 @@ sequenceDiagram
 ```
 
 `AuthService.staff` treats every role other than candidate as staff. Login/registration set user state immediately and navigate to `/dashboard`. Logout calls the API and clears local state.
+
+## Connectivity Detection
+
+```mermaid
+flowchart TD
+    Start[Application starts] --> Health[GET /health]
+    Health -->|2xx| Connected[Connected]
+    Health -->|network error / timeout / 502-504| Banner[Show connection-lost banner]
+    Browser[Browser offline event] --> Banner
+    Api[API request] -->|network error / 502-504| Banner
+    Banner --> Retry{Retry trigger}
+    Retry -->|15-second probe| Health
+    Retry -->|browser online event| Health
+    Retry -->|Try again| Health
+```
+
+`ConnectivityService` combines browser online/offline events, a five-second health timeout, periodic 15-second probes, and API interceptor failures. Authentication failures such as 401 do not mark the server disconnected. The banner remains visible across routes and offers an immediate retry.
 
 ## Candidate Journey
 
@@ -92,7 +110,7 @@ The create form collects title, location, workplace, employment, description, an
 
 ## Error And Validation Behavior
 
-HTML constraints cover required fields, URLs, maxlengths, email type, and minimum password length. Server errors are mapped through `httpErrorMessage` on selected forms. Several dashboard status, pipeline, primary-CV, and removal actions await calls without local try/catch, so errors may be unhandled and leave stale UI.
+HTML constraints cover required fields, URLs, maxlengths, email type, and minimum password length. Server errors are mapped through `httpErrorMessage` on selected forms. Network failures and gateway availability responses (502, 503, and 504) also update the application-wide connectivity state. Several dashboard status, pipeline, primary-CV, and removal actions await calls without local try/catch, so errors may be unhandled and leave stale UI.
 
 Angular enum strings depend on API camel-case enum serialization. Salary display assumes JPY and VND minor-unit divisor 1 and all other currencies divisor 100; this is presentation logic rather than a shared currency exponent model.
 
@@ -104,7 +122,7 @@ The browser receives user email, application candidate identity/email, cover let
 
 - No interview scheduling, cancellation, feedback, job editing, salary entry, or staff-management UI exists despite backend APIs.
 - The profile route browser guard checks authentication but not candidate role; server enforcement handles misuse.
-- There is no route-level lazy loading, pagination control, retry strategy, offline behavior, or unsaved-change protection.
+- There is no route-level lazy loading, pagination control, automatic business-request retry, offline write queue, or unsaved-change protection.
 - Several mutation actions lack disabled/busy states, confirmation, and error handling.
 - Client models omit interview feedback even though backend DTOs can return it.
 - Automated frontend coverage is limited to the generated app test and does not exercise product journeys.

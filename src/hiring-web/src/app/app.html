@@ -1,4 +1,11 @@
 <app-header />
+@if (connectivity.state() === 'disconnected') {
+  <aside class="connection-banner" role="alert" aria-live="assertive">
+    <span class="connection-dot"></span>
+    <div><strong>Connection lost</strong><small>{{ connectivity.message() }}</small></div>
+    <button class="button light small" (click)="connectivity.check()">Try again</button>
+  </aside>
+}
 @if (auth.ready()) {
   <router-outlet />
 } @else {

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 
 using HiringPlatform.Application.Applications;
+using HiringPlatform.Application.Applicants;
 using HiringPlatform.Application.Common;
 using HiringPlatform.Domain.Applications;
 using HiringPlatform.Domain.Common;
@@ -26,6 +27,7 @@ internal static class ApplicationEndpoints
         var secured = api.MapGroup("").RequireAuthorization();
         secured.MapGet("/jobs/{id:guid}/applications", ListJobApplications);
         secured.MapGet("/applications/{id:guid}", GetApplication);
+        secured.MapGet("/applications/{id:guid}/candidate-profile", GetCandidateProfile);
         secured.MapPost("/applications/{id:guid}/advance", AdvanceApplication);
         return api;
     }
@@ -58,6 +60,14 @@ internal static class ApplicationEndpoints
         Mediator mediator,
         CancellationToken ct) =>
         (await mediator.Send(new GetApplication(principal.UserId(), new ApplicationId(id)), ct)).ToHttp();
+
+    private static async Task<IResult> GetCandidateProfile(
+        Guid id,
+        ClaimsPrincipal principal,
+        Mediator mediator,
+        CancellationToken ct) =>
+        (await mediator.Send(new GetApplicantProfileForApplication(
+            principal.UserId(), new ApplicationId(id)), ct)).ToHttp();
 
     private static async Task<IResult> AdvanceApplication(
         Guid id,

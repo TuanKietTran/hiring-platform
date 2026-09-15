@@ -75,7 +75,9 @@ import { enumLabel } from '../core/models';
               <div class="role-head">
                 <div>
                   <span class="pill">{{ label(job.status) }}</span>
-                  <h3>{{ job.title }}</h3>
+                  <button class="role-title" type="button" (click)="toggleJob(job.id)" [attr.aria-expanded]="isExpanded(job.id)">
+                    {{ job.title }}
+                  </button>
                   <p>{{ job.location }} · {{ label(job.workplaceType) }}</p>
                 </div>
                 <div class="inline-actions">
@@ -90,28 +92,38 @@ import { enumLabel } from '../core/models';
                   @if (job.status !== 'closed') {
                     <button class="button ghost small" (click)="status(job, 'close')">Close</button>
                   }
-                  <button class="button light small" (click)="loadPipeline(job)">Candidates</button>
+                  <button class="button light small" type="button" (click)="loadPipeline(job)">Refresh candidates</button>
                 </div>
               </div>
-              @if (selectedJob() === job.id) {
+              @if (isExpanded(job.id)) {
                 <div class="pipeline">
-                  @for (app of pipeline(); track app.id) {
+                  @for (app of pipelines()[job.id] ?? []; track app.id) {
                     <div class="candidate">
-                      <div>
-                        <strong>{{ app.candidateName }}</strong
-                        ><small>{{ app.candidateEmail }} · Applied {{ date(app.appliedAt) }}</small>
+                      <div class="candidate-main">
+                        <strong>{{ app.candidateName }}</strong>
+                        <small>{{ app.candidateEmail }} · Applied {{ date(app.appliedAt) }}</small>
+                        @if (profiles()[app.id]; as profile) {
+                          <div class="applicant-profile">
+                            @if (profile.headline) { <b>{{ profile.headline }}</b> }
+                            @if (profile.summary) { <p>{{ profile.summary }}</p> }
+                            @if (profile.location) { <small>{{ profile.location }}</small> }
+                            <div class="cv-links">
+                              @for (cv of profile.cvs; track cv.id) {
+                                <a [href]="cv.url" target="_blank" rel="noopener">View CV: {{ cv.name }}</a>
+                              } @empty { <small>No CV uploaded</small> }
+                            </div>
+                          </div>
+                        } @else { <small class="profile-loading">Applicant profile unavailable.</small> }
                       </div>
-                      <span class="pill stage">{{ label(app.stage) }}</span
-                      ><select [ngModel]="app.stage" (ngModelChange)="advance(app, $event)">
+                      <span class="pill stage">{{ label(app.stage) }}</span>
+                      <select [ngModel]="app.stage" (ngModelChange)="advance(app, $event)">
                         <option [value]="app.stage">Move to…</option>
                         @for (stage of app.nextStages; track stage) {
                           <option [value]="stage">{{ label(stage) }}</option>
                         }
                       </select>
                     </div>
-                  } @empty {
-                    <div class="empty compact">No applications yet.</div>
-                  }
+                  } @empty { <div class="empty compact">No applications yet.</div> }
                 </div>
               }
             </article>
@@ -157,8 +169,9 @@ export class Dashboard implements OnInit {
   private readonly jobsApi = inject(JobsApi);
   protected readonly jobs = signal<Job[]>([]);
   protected readonly applications = signal<JobApplication[]>([]);
-  protected readonly pipeline = signal<JobApplication[]>([]);
-  protected readonly selectedJob = signal('');
+  protected readonly pipelines = signal<Record<string, JobApplication[]>>({});
+  protected readonly profiles = signal<Record<string, import('../core/models').ApplicantProfile>>({});
+  protected readonly expandedJobs = signal<string[]>([]);
   protected readonly showForm = signal(false);
   protected readonly error = signal('');
   protected readonly label = enumLabel;
@@ -184,8 +197,12 @@ export class Dashboard implements OnInit {
   }
   private async reload(): Promise<void> {
     try {
-      if (this.auth.staff()) this.jobs.set(await firstValueFrom(this.jobsApi.listForCompany()));
-      else this.applications.set(await firstValueFrom(this.applicationsApi.listMine()));
+      if (this.auth.staff()) {
+        const jobs = await firstValueFrom(this.jobsApi.listForCompany());
+        this.jobs.set(jobs);
+        this.expandedJobs.set(jobs.map((job) => job.id));
+        await Promise.all(jobs.map((job) => this.loadPipeline(job)));
+      } else this.applications.set(await firstValueFrom(this.applicationsApi.listMine()));
     } catch {
       this.error.set('Could not load your workspace.');
     }
@@ -221,10 +238,19 @@ export class Dashboard implements OnInit {
     await firstValueFrom(this.jobsApi.changeStatus(job.id, change));
     await this.reload();
   }
+  protected isExpanded(jobId: string): boolean {
+    return this.expandedJobs().includes(jobId);
+  }
+  protected toggleJob(jobId: string): void {
+    this.expandedJobs.update((ids) => ids.includes(jobId) ? ids.filter((id) => id !== jobId) : [...ids, jobId]);
+  }
   protected async loadPipeline(job: Job): Promise<void> {
-    this.selectedJob.set(this.selectedJob() === job.id ? '' : job.id);
-    if (this.selectedJob())
-      this.pipeline.set(await firstValueFrom(this.applicationsApi.listForJob(job.id)));
+    const applications = await firstValueFrom(this.applicationsApi.listForJob(job.id));
+    this.pipelines.update((all) => ({ ...all, [job.id]: applications }));
+    const loaded = await Promise.all(applications.map(async (app) => {
+      try { return [app.id, await firstValueFrom(this.applicationsApi.candidateProfile(app.id))] as const; } catch { return null; }
+    }));
+    this.profiles.update((all) => ({ ...all, ...Object.fromEntries(loaded.filter((entry): entry is NonNullable<typeof entry> => entry !== null)) }));
   }
   protected async advance(app: JobApplication, to: ApplicationStage): Promise<void> {
     if (to === app.stage) return;

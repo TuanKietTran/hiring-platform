@@ -569,9 +569,19 @@ textarea {
   align-items: center;
   gap: 20px;
 }
-.role-head h3 {
+.role-title {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
   font: 700 20px 'Manrope';
   margin: 11px 0 4px;
+  cursor: pointer;
+}
+.role-title:hover {
+  color: var(--green);
 }
 .role-head p {
   margin: 0;
@@ -599,6 +609,34 @@ textarea {
 .candidate > div {
   display: grid;
   gap: 4px;
+}
+.applicant-profile {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--lime);
+  background: #fbfaf6;
+  display: grid;
+  gap: 5px;
+}
+.applicant-profile p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.cv-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 3px;
+}
+.cv-links a {
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+}
+.profile-loading {
+  font-style: italic;
 }
 .candidate small {
   color: var(--muted);

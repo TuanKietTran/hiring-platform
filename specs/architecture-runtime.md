@@ -59,11 +59,11 @@ flowchart TB
 | Migrator | Schema initialization and development seed | Writes PostgreSQL before services start |
 | AppHost | Process orchestration, discovery, health dependencies, and replica count | None |
 
-The service boxes are independent runtime deployments, but identity, applicant, and recruiter are not yet independent data or code bounded contexts. They reuse the same endpoint modules, application assembly, infrastructure assembly, and PostgreSQL schema. Blob storage is the first separately owned persistence boundary.
+The service boxes are independent runtime deployments, but identity, applicant, and recruiter still share the current Domain, Application, Infrastructure, and endpoint modules. The target extraction is to introduce a small Common kernel and give each service its own Domain, Application, Infrastructure, and Api projects while retaining a shared PostgreSQL database during phase one. Blob storage is the first separately owned persistence boundary.
 
 `Domain` is framework-free. `Application` owns CQRS requests, handlers, DTOs, ports, and ABAC enforcement. `Infrastructure` implements PostgreSQL repositories, clock, unit of work, and password hashing. API endpoint modules adapt HTTP to the mediator.
 
-`HiringPlatform.Api` remains a monolithic host mapping all endpoint families, but Aspire currently exposes the gateway and bounded services instead. Startup ordering is documented independently below.
+The extracted service hosts currently map only their endpoint family by linking endpoint modules from `HiringPlatform.Api`. `HiringPlatform.Api` remains a monolithic compatibility host and will be removed after endpoint ownership is moved into the service API projects. Aspire exposes the gateway and bounded services. Startup ordering is documented independently below.
 
 ## Gateway Dispatch Flow
 
@@ -123,7 +123,7 @@ Identity, applicant, recruiter, and blob services use cookie name `hiring.sessio
 
 ## Current Gaps
 
-- Identity, applicant, and recruiter services share one PostgreSQL schema and the complete application/infrastructure assembly, so data and code ownership are not isolated; blob content is separately owned in MinIO.
+- Identity, applicant, and recruiter still share one PostgreSQL schema and shared core assemblies; code extraction is the next phase. Phase two will introduce service-owned schemas/databases and integration events.
 - Gateway route ownership remains centralized at the edge and requires contract tests whenever the public API changes.
 - Edge circuit breaking is not configured in YARP; service-to-service clients receive the standard HTTP resilience pipeline from `HiringPlatform.ServiceDefaults`.
 - Shared data-protection keys use `/tmp`; durability and cross-host sharing are not production-ready.

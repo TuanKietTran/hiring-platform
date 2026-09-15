@@ -59,13 +59,17 @@ sequenceDiagram
     Script->>K8s: Ensure postgres/devbox deployments
     K8s-->>Script: Rollouts ready
     Script->>Pod: Build solution
-    Script->>Aspire: Run AppHost with local http profile
+    Script->>Aspire: Run AppHost with local HTTPS profile
     Aspire->>Aspire: Run migrator then services/gateway/web
     Developer->>Script: ./dev.sh ports
+    Script->>Pod: Read tokenized dashboard login URL from Aspire log
+    Script-->>Developer: Print dashboard login URL and web URL
     Script->>K8s: Port-forward dashboard 15888 and web 4201
 ```
 
-Kubernetes PVCs retain PostgreSQL and package caches. Host source is mounted into the Linux pod. `start` is idempotent for a running AppHost process; `stop`, `logs`, `shell`, `exec`, `rebuild`, and `down` provide lifecycle operations.
+`./dev.sh ports` prints the complete `https://localhost:15888/login?t=…` URL before starting the blocking port-forward command. If Aspire has not emitted a token yet, it reports that startup is not ready instead of presenting an unusable dashboard URL.
+
+Kubernetes PVCs retain PostgreSQL and package caches. Host source is mounted into the Linux pod. `start` is idempotent for a running AppHost process. Before a new AppHost starts, `start` and `stop` terminate stale Angular/npm resource processes so port 4200 cannot remain attached after DCP exits. `stop`, `logs`, `shell`, `exec`, `rebuild`, and `down` provide lifecycle operations.
 
 The local AppHost profile sets Development and explicitly enables development seed. Seed credentials are local-only and documented in README. Migrator startup gates bounded services.
 
@@ -76,7 +80,7 @@ OpenTelemetry captures logs, ASP.NET Core/HTTP tracing, runtime metrics, and OTL
 ## Current Gaps
 
 - There is no CI workflow checked into the repository.
-- There are no application, persistence integration, API contract, gateway routing, cookie interoperability, migration, load-balancing, failure-injection, or end-to-end tests.
+- There are no application, persistence integration, API contract, gateway routing, cookie interoperability, migration, load-balancing, connectivity-state, failure-injection, or end-to-end tests.
 - PostgreSQL `EnsureCreated` is prototype-only and has no migration rollback/forward test.
 - Local development depends on OrbStack Kubernetes and hard-coded namespace/service details.
 - No load, security, accessibility, browser-matrix, backup/restore, or deployment smoke tests exist.
