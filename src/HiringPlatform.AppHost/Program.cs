@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -17,8 +18,16 @@ else
         .AddDatabase("hiringdb");
 }
 
+var migrator = builder.AddProject<Projects.HiringPlatform_Migrator>("migrator")
+    .WithReference(database)
+    .WaitFor(database);
+
+if (builder.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("DevelopmentSeed:Enabled"))
+    migrator.WithEnvironment("DevelopmentSeed__Enabled", "true");
+
 var api = builder.AddProject<Projects.HiringPlatform_Api>("api")
     .WithReference(database)
+    .WaitForCompletion(migrator)
     .WithHttpHealthCheck("/health");
 
 builder.AddJavaScriptApp("web", "../hiring-web", "start")

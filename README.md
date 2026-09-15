@@ -43,6 +43,15 @@ Then open:
 - Angular app: http://localhost:4201
 - Aspire dashboard: http://localhost:15888 (the tokenized login URL is in `./dev.sh logs`)
 
+Development startup idempotently seeds these local-only accounts:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Candidate | `candidate@hirelane.dev` | `HirelaneDev1!` |
+| Organization admin | `admin@hirelane.dev` | `HirelaneDev1!` |
+
+The one-shot migrator hashes these passwords through the production password hasher. Seeding requires both the `Development` environment and the local launch profile's explicit `DevelopmentSeed:Enabled` opt-in; it never overwrites existing accounts.
+
 After restarting the Mac, open OrbStack and run those same two commands. Kubernetes recreates both Deployments; PVCs retain PostgreSQL data, Linux `node_modules`, and NuGet caches, while the host-mounted source remains on macOS.
 
 Useful commands:

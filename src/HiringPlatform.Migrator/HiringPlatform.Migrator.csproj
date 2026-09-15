@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HiringPlatform.Application\HiringPlatform.Application.csproj" />
+    <ProjectReference Include="..\HiringPlatform.Infrastructure\HiringPlatform.Infrastructure.csproj" />
+    <ProjectReference Include="..\HiringPlatform.ServiceDefaults\HiringPlatform.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

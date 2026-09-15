@@ -2,6 +2,7 @@
   <PropertyGroup><OutputType>Exe</OutputType><NoWarn>$(NoWarn);ASPIRE010</NoWarn></PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\HiringPlatform.Api\HiringPlatform.Api.csproj" />
+    <ProjectReference Include="..\HiringPlatform.Migrator\HiringPlatform.Migrator.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="13.5.3" />
