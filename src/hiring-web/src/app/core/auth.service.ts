@@ -12,8 +12,14 @@ export class AuthService {
   readonly ready = signal(false);
   readonly authenticated = computed(() => this.user() !== null);
   readonly staff = computed(() => isStaff(this.user()));
+  private restoring: Promise<void> | null = null;
 
-  async restore(): Promise<void> {
+  /** Restores the cookie session once; later calls share the same pending restore. */
+  restore(): Promise<void> {
+    return (this.restoring ??= this.load());
+  }
+
+  private async load(): Promise<void> {
     try {
       this.user.set(await firstValueFrom(this.api.me()));
     } catch (error) {

@@ -94,6 +94,37 @@ a {
   font-size: 14px;
   font-weight: 600;
 }
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  cursor: pointer;
+}
+.menu-toggle span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+  transition:
+    transform 0.2s,
+    opacity 0.2s;
+}
+.menu-open .menu-toggle span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+.menu-open .menu-toggle span:nth-child(2) {
+  opacity: 0;
+}
+.menu-open .menu-toggle span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
 
 .button {
   display: inline-flex;
@@ -760,6 +791,30 @@ textarea {
   }
   .topbar nav {
     display: none;
+  }
+  .menu-toggle {
+    display: flex;
+  }
+  .topbar.menu-open nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    padding: 8px max(5vw, 24px) 16px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    box-shadow: var(--shadow);
+  }
+  .topbar.menu-open nav a {
+    padding: 14px 0;
+    font-size: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar.menu-open nav a:last-child {
+    border-bottom: 0;
   }
   .user-name {
     display: none;
