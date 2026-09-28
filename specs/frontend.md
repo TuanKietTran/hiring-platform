@@ -48,8 +48,12 @@ sequenceDiagram
         Auth->>Auth: user=null; ready=true
     end
     Router->>Auth: Evaluate protected route
-    Auth-->>Router: allow or redirect /login
+    Auth-->>Router: await restore, then allow or redirect /login
 ```
+
+`AuthService.restore()` runs once and returns the same pending promise to later callers. `authGuard` and `staffGuard` await it, so a hard refresh or direct load of `/dashboard` or `/profile` keeps a signed-in user on that route instead of redirecting to `/login`.
+
+Below 800px the header hides the inline nav and shows a menu button (`aria-controls="primary-nav"`, `aria-expanded`). The menu opens the same links as a dropdown and closes on navigation or Escape.
 
 `AuthService.staff` treats every role other than candidate as staff. Login/registration set user state immediately and navigate to `/dashboard`. Logout calls the API and clears local state.
 
